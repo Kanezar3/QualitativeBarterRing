@@ -333,6 +333,12 @@ def test_adversarial_leader_on_chain_consensus_rejection():
 # =============================================================================
 def test_market_lifecycle_and_unauthorized_guards():
     contract = QualitativeBarterRing()
+    
+    # 0. Non-admin caller attempting to open market rejected
+    set_sender(ADDR_ATTACKER)
+    with pytest.raises(UserError, match="UNAUTHORIZED_CALLER"):
+        contract.open_market(1200, 100, 5)
+
     set_sender(ADDR_ADMIN)
 
     # 1. Invalid market duration (< 60 or > 30 days)
@@ -350,7 +356,14 @@ def test_market_lifecycle_and_unauthorized_guards():
     # Successfully open
     contract.open_market(1200, 100, 5)
 
-    # Double open is forbidden
+    # 4. Unauthorized caller attempting to open market after opening also triggers UNAUTHORIZED_CALLER
+    set_sender(ADDR_ATTACKER)
+    with pytest.raises(UserError, match="UNAUTHORIZED_CALLER"):
+        contract.open_market(1200, 100, 5)
+
+    set_sender(ADDR_ADMIN)
+
+    # Double open by admin is forbidden
     with pytest.raises(UserError, match="MARKET_ALREADY_OPENED"):
         contract.open_market(1200, 100, 5)
 
@@ -543,6 +556,34 @@ def test_fail_closed_evidence_and_hash_enforcement():
     contract.register_offer("off_utf8", "Summary UTF8", "Demand UTF8", url_bad_utf8, _sha256_hex(b"\xff\xfe\x00\x00\xaa\xbb"))
     res_utf8 = contract.evaluate_edge("off_utf8", "off_01")
     assert res_utf8 == "VERIFIED:UNVERIFIABLE:FETCH_OR_PARSE_FAILURE"
+
+    # 7. Empty response body (status 200 with 0 bytes) fails closed
+    url_empty = "https://raw.githubusercontent.com/Kanezar3/QualitativeBarterRing/7a9b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b/empty.json"
+    mock_web_responses[url_empty] = MockWebResponse(status=200, body=b"")
+    addr_empty = Address("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+    set_sender(addr_empty)
+    contract.register_offer("off_empty", "Summary Empty", "Demand Empty", url_empty, _sha256_hex(b""))
+    res_empty = contract.evaluate_edge("off_empty", "off_01")
+    assert res_empty == "VERIFIED:UNVERIFIABLE:FETCH_OR_PARSE_FAILURE"
+
+    # 8. Invented / hallucinated LLM enum values fail closed
+    url_hallucinated = "https://raw.githubusercontent.com/Kanezar3/QualitativeBarterRing/7a9b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b/hallucinated.json"
+    b_hallucinated = b'{"data": "valid_json"}'
+    mock_web_responses[url_hallucinated] = MockWebResponse(status=200, body=b_hallucinated)
+    addr_hallucinated = Address("0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
+    set_sender(addr_hallucinated)
+    contract.register_offer("off_hal", "Summary Hal", "Demand Hal", url_hallucinated, _sha256_hex(b_hallucinated))
+
+    # Force LLM mock to return hallucinated enum tokens for this edge
+    def llm_hallucinated(prompt: str) -> dict:
+        if "Summary Hal" in prompt:
+            return {"verdict": "APPROVE_NOW", "reason": "LOOKS_GOOD"}
+        return {"verdict": "DEFICIENT", "reason": "SPEC_DEFICIENT"}
+
+    mock_llm_responses.insert(0, llm_hallucinated)
+
+    res_hal = contract.evaluate_edge("off_hal", "off_01")
+    assert res_hal == "VERIFIED:UNVERIFIABLE:FETCH_OR_PARSE_FAILURE"
 
 
 # =============================================================================
