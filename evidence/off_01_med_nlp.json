@@ -1,0 +1,20 @@
+{
+  "asset_id": "off_01",
+  "title": "ClinicalNLP-10K De-identified Medical Dialogue Dataset",
+  "license": "CC-BY-4.0",
+  "records_count": 10000,
+  "data_format": "JSONL",
+  "description": "De-identified medical clinical dialogues and diagnostic summaries containing 10,000 verified patient-clinician interactions with expert medical annotations.",
+  "schema": {
+    "fields": [
+      "patient_id_anon",
+      "chief_complaint",
+      "clinical_dialogue",
+      "icd10_codes",
+      "verified_resolution"
+    ],
+    "hipaa_compliant": true,
+    "phi_scrubbed": true
+  },
+  "benchmark_accuracy": 0.984
+}

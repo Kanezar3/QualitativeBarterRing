@@ -1,0 +1,20 @@
+{
+  "asset_id": "off_bad",
+  "title": "Unverified Clinical Raw Text Dump",
+  "license": "CC-BY-NC-ND-4.0",
+  "records_count": 450,
+  "data_format": "RAW_TXT",
+  "description": "Unsorted raw scraping from public health forums. Lacks clinical verification, lacks HIPAA de-identification certificate, and contains under 500 unannotated entries.",
+  "schema": {
+    "fields": [
+      "raw_post"
+    ],
+    "hipaa_compliant": false,
+    "phi_scrubbed": false
+  },
+  "deficiencies": [
+    "Does not meet minimum 5,000 clinical records requirement",
+    "License CC-BY-NC-ND-4.0 violates required CC-BY-4.0 commercial reuse",
+    "Missing structured ICD-10 schema annotations"
+  ]
+}

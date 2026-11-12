@@ -1,0 +1,14 @@
+{
+  "asset_id": "off_03",
+  "title": "Enterprise Cloud GPU Compute Cluster SLA Guarantee",
+  "license": "Commercial Service Agreement",
+  "service_type": "Dedicated GPU Compute Cluster",
+  "description": "Legally binding Service Level Agreement guaranteeing 99.95% high-performance GPU cluster availability with automated failover and 24/7 SRE incident response.",
+  "sla_terms": {
+    "uptime_guarantee_percent": 99.95,
+    "hardware": "8x NVIDIA H100 SXM5",
+    "maximum_unplanned_downtime_minutes_per_month": 21.6,
+    "incident_response_target_minutes": 15,
+    "credit_remedy_on_breach": "Full pro-rata refund plus 20% penalty credit"
+  }
+}

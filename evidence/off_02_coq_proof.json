@@ -1,0 +1,15 @@
+{
+  "asset_id": "off_02",
+  "title": "VerifiedComp Coq Formal Verification Certificate",
+  "license": "MIT",
+  "target_system": "Compiler Optimization Pipeline",
+  "proof_assistant": "Coq 8.18",
+  "description": "Machine-checked formal proof of semantic preservation and type safety across intermediate representation optimization passes.",
+  "verification_details": {
+    "lemmas_checked": 412,
+    "axioms_admitted": 0,
+    "build_status": "Qed_VERIFIED",
+    "compiler_correctness_proven": true
+  },
+  "repository": "Kanezar3/QualitativeBarterRing"
+}
