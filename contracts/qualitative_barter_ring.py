@@ -225,6 +225,9 @@ class QualitativeBarterRing(gl.Contract):
         Initializes the clearing market with duration, deposit bond, and solver bounty.
         Can only be opened once.
         """
+        if str(gl.message.sender_address).lower() != self.admin.lower():
+            raise gl.vm.UserError("UNAUTHORIZED_CALLER")
+
         if self.market_opened:
             raise gl.vm.UserError("MARKET_ALREADY_OPENED")
 
