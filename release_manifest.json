@@ -1,0 +1,472 @@
+{
+  "projectName": "QualitativeBarterRing",
+  "description": "Intelligent Multilateral Qualitative Barter Ring Clearinghouse on GenLayer StudioNet",
+  "repositoryUrl": "https://github.com/Kanezar3/QualitativeBarterRing",
+  "deployCommitSha": "537e6d1ba61b1b879683e00d3c04246b08f2a7c0",
+  "contractPath": "contracts/qualitative_barter_ring.py",
+  "gitBlobHash": "dfabff1b4f3e23d67e95a653662964a20e728eca",
+  "localContractSha256": "fb6df6d6d6310932e16e4a692c927c6bba58aa38b056282d594136c9db9a191e",
+  "onChainCodeSha256": "fb6df6d6d6310932e16e4a692c927c6bba58aa38b056282d594136c9db9a191e",
+  "blobEqualityVerified": true,
+  "probeContractAddress": "0xa59d6Ff0456Bd9F2a625C998bcCCE9b60267a2cA",
+  "probeDeployTxHash": "0x7438711649445244a8b2d713fbfb8dbdcf744e3d4a2a157af00603a63e32de54",
+  "probeSetTxHash": "0x3bb20fd89b61359233675a5a8d3c15fee7197484c34558d1e507a43f37aefa9c",
+  "probeVerifiedValue": "probe_ok",
+  "mainContractAddress": "0x1E979E7B37B6159281C408cE2620F897d45C5B32",
+  "mainDeployTxHash": "0xd238147f743b7aa072f4621c0f68d2b85f435ec718a41c81186a1b4197995f80",
+  "chain": {
+    "chainId": 61999,
+    "network": "GenLayer StudioNet",
+    "rpcUrl": "https://studio.genlayer.com/api",
+    "explorerUrl": "https://explorer-studio.genlayer.com"
+  },
+  "accounts": {
+    "admin": "0x1D3e2b606418392Ca4DF6a311693A6d1fD722F65",
+    "alice": "0xa4223Ecd2310feD1DA200f28893599ea5285A0Eb",
+    "bob": "0xCB8AC958F8bF24a57C4a92C5e6732FfdAe5df3F2",
+    "carol": "0xe18F432c9A35c25dfF2CA060027B86ba26eD99cd",
+    "solver": "0xEb55b0551b2456375D451b3a00CA36db3313A155",
+    "attacker": "0x6ba1e0c9Ce03bD0c425bb2E6Bdc1adC13595F758"
+  },
+  "evidenceFiles": [
+    {
+      "file": "evidence/off_01_med_nlp.json",
+      "url": "https://raw.githubusercontent.com/Kanezar3/QualitativeBarterRing/537e6d1ba61b1b879683e00d3c04246b08f2a7c0/evidence/off_01_med_nlp.json",
+      "sha256": "d398d4ec3a21efd6569b0b86e81d6b3c5216fa5c1759d0b977f931b4d63d3063",
+      "size": 604
+    },
+    {
+      "file": "evidence/off_02_coq_proof.json",
+      "url": "https://raw.githubusercontent.com/Kanezar3/QualitativeBarterRing/537e6d1ba61b1b879683e00d3c04246b08f2a7c0/evidence/off_02_coq_proof.json",
+      "sha256": "d4240d7111cedc3400fe05b0ced03aef95c5e81235307079fc6b9d9ab3b68805",
+      "size": 554
+    },
+    {
+      "file": "evidence/off_03_compute_sla.json",
+      "url": "https://raw.githubusercontent.com/Kanezar3/QualitativeBarterRing/537e6d1ba61b1b879683e00d3c04246b08f2a7c0/evidence/off_03_compute_sla.json",
+      "sha256": "6e95c03ffd8d6a558764e9a78122604e1f7a15964f9e88fe008a33754589d494",
+      "size": 646
+    },
+    {
+      "file": "evidence/off_bad_deficient.json",
+      "url": "https://raw.githubusercontent.com/Kanezar3/QualitativeBarterRing/537e6d1ba61b1b879683e00d3c04246b08f2a7c0/evidence/off_bad_deficient.json",
+      "sha256": "0571768b7f411a76fc3dcac9540156649f5e259cd0f4c91920a9a58cdc90015e",
+      "size": 676
+    }
+  ],
+  "transactions": [
+    {
+      "step": "X1",
+      "scenario": "Unauthorized Caller open_market Blocked",
+      "method": "open_market",
+      "caller": "Attacker",
+      "hash": "0x71426760051ad2766a4e40b4ea0ae5bacddab64a23bf193309d3761970ea16a8",
+      "status": "FINALIZED",
+      "executionResult": "ERROR",
+      "returnOrError": "UNAUTHORIZED_CALLER",
+      "votes": {
+        "0x003192Feb616fA23158e1Ce232B4662458EebC28": "agree",
+        "0x0CE08AA7F69f0b5a9A4C10E18d890B4fc94AEdA2": "agree",
+        "0x111F278186F7D8371f8da960acC04f9D0911Ed2e": "agree",
+        "0x42509F1b311C37DD50297fe16C283F392C7cD3E7": "agree",
+        "0xAF618472AEfF108f7Af2E6f9748794C57A2A11b5": "agree"
+      },
+      "expected": "UNAUTHORIZED_CALLER",
+      "expectedFailure": true
+    },
+    {
+      "step": "S1",
+      "scenario": "Market Initialization (Duration 1800s, Deposit 100, Bounty 5)",
+      "method": "open_market",
+      "caller": "Admin",
+      "hash": "0x29845d9234417c479950b945f37904b2a1fc6ebb12d732c5ff56a51e92476e3e",
+      "status": "FINALIZED",
+      "executionResult": "SUCCESS",
+      "returnOrError": "MARKET_OPENED:id=1",
+      "votes": {
+        "0x0CE08AA7F69f0b5a9A4C10E18d890B4fc94AEdA2": "agree",
+        "0x22681B4D0B784973415385F6e37876eB62383783": "agree",
+        "0xC7C5F881AA4FD0969dBe6c7344Dc0f9C71498498": "idle",
+        "0xad5793D7AA725ccdE8Da6fAF3400de8067559D8c": "agree",
+        "0xb6f925c91960bcB8a29C2c2108cC1ad42D519475": "idle"
+      },
+      "expected": "MARKET_OPENED:id=1",
+      "expectedFailure": false,
+      "readBack": {
+        "admin": "0x1D3e2b606418392Ca4DF6a311693A6d1fD722F65",
+        "deposit_amount": 100,
+        "market_deadline": 1794574974,
+        "market_opened": true,
+        "offers_count": 0,
+        "rings_count": 0,
+        "solver_bounty_fee": 5,
+        "total_active_deposits": 0,
+        "total_pending_withdrawals": 0
+      }
+    },
+    {
+      "step": "X2",
+      "scenario": "Unpinned Mutable URL Blocked",
+      "method": "register_offer",
+      "caller": "Alice",
+      "hash": "0xd72ff62ddad811434bb2eece201951583d4bbae362b5fa238611b65befc04b6c",
+      "status": "FINALIZED",
+      "executionResult": "ERROR",
+      "returnOrError": "INVALID_EVIDENCE_URL",
+      "votes": {
+        "0x28A9AEd6c177f234BDdD6f0507B2B2E07E6FfcE1": "agree",
+        "0x435b49A3c8356E1B5eB4369d829510A7a004eCfC": "idle",
+        "0x93bC68565cA1E41EA27D30192cB900B497dC7A04": "agree",
+        "0xBDe7bCB9E579A6a63fC4C58e3f2BF458af7B1f30": "agree",
+        "0xc3107801f55D209f667101272bc2905Ad83ba792": "idle"
+      },
+      "expected": "INVALID_EVIDENCE_URL",
+      "expectedFailure": true
+    },
+    {
+      "step": "S2",
+      "scenario": "Alice Registers Qualitative Offer & Demand",
+      "method": "register_offer",
+      "caller": "Alice",
+      "hash": "0x7bcf15c7a2bf1ac6b360edb06cda47ba07587db332b94dcbb184430b375595df",
+      "status": "FINALIZED",
+      "executionResult": "SUCCESS",
+      "returnOrError": "REGISTERED:off_01",
+      "votes": {
+        "0x22681B4D0B784973415385F6e37876eB62383783": "agree",
+        "0x42509F1b311C37DD50297fe16C283F392C7cD3E7": "idle",
+        "0x435b49A3c8356E1B5eB4369d829510A7a004eCfC": "idle",
+        "0xc6425717F235a81a2D456c65231afB3d62A5fcdD": "agree",
+        "0xee496Cab6D4428e20DAa0f3C4011C0772503cE95": "agree"
+      },
+      "expected": "REGISTERED:off_01",
+      "expectedFailure": false,
+      "readBack": {
+        "content_hash": "d398d4ec3a21efd6569b0b86e81d6b3c5216fa5c1759d0b977f931b4d63d3063",
+        "created_at": 1794573250,
+        "demand_spec": "Formal verification Coq proof certificate for compiler optimization pipeline with MIT or Apache-2.0 license",
+        "deposit_amount": 100,
+        "evidence_url": "https://raw.githubusercontent.com/Kanezar3/QualitativeBarterRing/537e6d1ba61b1b879683e00d3c04246b08f2a7c0/evidence/off_01_med_nlp.json",
+        "offer_id": "off_01",
+        "offer_summary": "De-identified medical clinical dialogue NLP dataset, 10k verified patient cohort, CC-BY-4.0 license with HIPAA certification",
+        "owner": "0xa4223ecd2310fed1da200f28893599ea5285a0eb",
+        "ring_id": "",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "step": "S3",
+      "scenario": "Bob Registers Qualitative Offer & Demand",
+      "method": "register_offer",
+      "caller": "Bob",
+      "hash": "0x08578b9a126a447db9986c6cc660cb53830e496e3161a3aff0254ea16b9dc655",
+      "status": "FINALIZED",
+      "executionResult": "SUCCESS",
+      "returnOrError": "REGISTERED:off_02",
+      "votes": {
+        "0x42509F1b311C37DD50297fe16C283F392C7cD3E7": "agree",
+        "0x435b49A3c8356E1B5eB4369d829510A7a004eCfC": "idle",
+        "0x93bC68565cA1E41EA27D30192cB900B497dC7A04": "agree",
+        "0xC7C5F881AA4FD0969dBe6c7344Dc0f9C71498498": "idle",
+        "0xb6f925c91960bcB8a29C2c2108cC1ad42D519475": "agree"
+      },
+      "expected": "REGISTERED:off_02",
+      "expectedFailure": false,
+      "readBack": {
+        "content_hash": "d4240d7111cedc3400fe05b0ced03aef95c5e81235307079fc6b9d9ab3b68805",
+        "created_at": 1794573287,
+        "demand_spec": "Dedicated high-performance GPU cluster SLA with at least 8x H100 SXM5 and >= 99.9% uptime",
+        "deposit_amount": 100,
+        "evidence_url": "https://raw.githubusercontent.com/Kanezar3/QualitativeBarterRing/537e6d1ba61b1b879683e00d3c04246b08f2a7c0/evidence/off_02_coq_proof.json",
+        "offer_id": "off_02",
+        "offer_summary": "Verified Coq proof certificate for compiler AST optimization with MIT license",
+        "owner": "0xcb8ac958f8bf24a57c4a92c5e6732ffdae5df3f2",
+        "ring_id": "",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "step": "S4",
+      "scenario": "Carol Registers Qualitative Offer & Demand",
+      "method": "register_offer",
+      "caller": "Carol",
+      "hash": "0xfa2def252fde6e38ea6164265f1c796aa3879137b3945761975cb18669860d82",
+      "status": "FINALIZED",
+      "executionResult": "SUCCESS",
+      "returnOrError": "REGISTERED:off_03",
+      "votes": {
+        "0x0CE08AA7F69f0b5a9A4C10E18d890B4fc94AEdA2": "agree",
+        "0x3bfC19e9460903563b9F6C85025b0E9d8B55A41C": "agree",
+        "0x435b49A3c8356E1B5eB4369d829510A7a004eCfC": "idle",
+        "0x93bC68565cA1E41EA27D30192cB900B497dC7A04": "idle",
+        "0xc6425717F235a81a2D456c65231afB3d62A5fcdD": "agree"
+      },
+      "expected": "REGISTERED:off_03",
+      "expectedFailure": false,
+      "readBack": {
+        "content_hash": "6e95c03ffd8d6a558764e9a78122604e1f7a15964f9e88fe008a33754589d494",
+        "created_at": 1794573334,
+        "demand_spec": "De-identified medical clinical dialogue NLP dataset with at least 5,000 verified patient records under CC-BY-4.0 or Apache-2.0",
+        "deposit_amount": 100,
+        "evidence_url": "https://raw.githubusercontent.com/Kanezar3/QualitativeBarterRing/537e6d1ba61b1b879683e00d3c04246b08f2a7c0/evidence/off_03_compute_sla.json",
+        "offer_id": "off_03",
+        "offer_summary": "Dedicated high-performance 8x H100 SXM5 GPU cluster SLA with 99.95% uptime guarantee",
+        "owner": "0xe18f432c9a35c25dff2ca060027b86ba26ed99cd",
+        "ring_id": "",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "step": "S5",
+      "scenario": "Pairwise Non-Coincidence Check (Bilateral Failure Proved)",
+      "method": "evaluate_edge",
+      "caller": "Admin",
+      "hash": "0x1f5dfdd273a4832e305950d2961734ef86cc87c49b4bc09694b19c19d70833e7",
+      "status": "FINALIZED",
+      "executionResult": "SUCCESS",
+      "returnOrError": "VERIFIED:DEFICIENT:SPEC_DEFICIENT",
+      "votes": {
+        "0x3bfC19e9460903563b9F6C85025b0E9d8B55A41C": "idle",
+        "0x736d834361E9b2BeB24441905252FC7421818Fb1": "agree",
+        "0xBDe7bCB9E579A6a63fC4C58e3f2BF458af7B1f30": "idle",
+        "0xad5793D7AA725ccdE8Da6fAF3400de8067559D8c": "agree",
+        "0xc11341b779Da78CAF29d8dAe09DF1B9B1075d462": "agree"
+      },
+      "expected": "VERIFIED:DEFICIENT:SPEC_DEFICIENT",
+      "expectedFailure": false,
+      "readBack": {
+        "evaluated_at": 1794573382,
+        "evidence_digest": "d398d4ec3a21efd6569b0b86e81d6b3c5216fa5c1759d0b977f931b4d63d3063",
+        "from_offer_id": "off_01",
+        "reason": "SPEC_DEFICIENT",
+        "to_offer_id": "off_02",
+        "verdict": "DEFICIENT"
+      }
+    },
+    {
+      "step": "S6",
+      "scenario": "Ring Edge 1 Adjudication (Alice -> Carol)",
+      "method": "evaluate_edge",
+      "caller": "Admin",
+      "hash": "0xca0523ee4900e9f3bd52668992ae8aed2824a7bee9156aa1a302016594f42873",
+      "status": "FINALIZED",
+      "executionResult": "SUCCESS",
+      "returnOrError": "VERIFIED:SATISFIES:FULL_MATCH",
+      "votes": {
+        "0x0CE08AA7F69f0b5a9A4C10E18d890B4fc94AEdA2": "agree",
+        "0x22681B4D0B784973415385F6e37876eB62383783": "idle",
+        "0x3bfC19e9460903563b9F6C85025b0E9d8B55A41C": "agree",
+        "0xc3107801f55D209f667101272bc2905Ad83ba792": "idle",
+        "0xee496Cab6D4428e20DAa0f3C4011C0772503cE95": "agree"
+      },
+      "expected": "VERIFIED:SATISFIES:FULL_MATCH",
+      "expectedFailure": false,
+      "readBack": {
+        "evaluated_at": 1794573428,
+        "evidence_digest": "d398d4ec3a21efd6569b0b86e81d6b3c5216fa5c1759d0b977f931b4d63d3063",
+        "from_offer_id": "off_01",
+        "reason": "FULL_MATCH",
+        "to_offer_id": "off_03",
+        "verdict": "SATISFIES"
+      }
+    },
+    {
+      "step": "S7",
+      "scenario": "Ring Edge 2 Adjudication (Carol -> Bob)",
+      "method": "evaluate_edge",
+      "caller": "Admin",
+      "hash": "0x01b944c0b8cbd49e73d73de2fa9b89d02653dcbc829ce6a362f2f590a410f2e8",
+      "status": "FINALIZED",
+      "executionResult": "SUCCESS",
+      "returnOrError": "VERIFIED:SATISFIES:FULL_MATCH",
+      "votes": {
+        "0x22681B4D0B784973415385F6e37876eB62383783": "idle",
+        "0x28A9AEd6c177f234BDdD6f0507B2B2E07E6FfcE1": "agree",
+        "0x93bC68565cA1E41EA27D30192cB900B497dC7A04": "agree",
+        "0xBDe7bCB9E579A6a63fC4C58e3f2BF458af7B1f30": "agree",
+        "0xC7C5F881AA4FD0969dBe6c7344Dc0f9C71498498": "agree"
+      },
+      "expected": "VERIFIED:SATISFIES:FULL_MATCH",
+      "expectedFailure": false,
+      "readBack": {
+        "evaluated_at": 1794573475,
+        "evidence_digest": "6e95c03ffd8d6a558764e9a78122604e1f7a15964f9e88fe008a33754589d494",
+        "from_offer_id": "off_03",
+        "reason": "FULL_MATCH",
+        "to_offer_id": "off_02",
+        "verdict": "SATISFIES"
+      }
+    },
+    {
+      "step": "S8",
+      "scenario": "Ring Edge 3 Adjudication (Bob -> Alice)",
+      "method": "evaluate_edge",
+      "caller": "Admin",
+      "hash": "0x8684006709e205926c0ac06bf789c62c652b5f64d2f945642978e29c6a14d36c",
+      "status": "FINALIZED",
+      "executionResult": "SUCCESS",
+      "returnOrError": "VERIFIED:SATISFIES:FULL_MATCH",
+      "votes": {
+        "0x003192Feb616fA23158e1Ce232B4662458EebC28": "agree",
+        "0x3bfC19e9460903563b9F6C85025b0E9d8B55A41C": "idle",
+        "0x5004AED07d19D8750DA8488EDa327A3A81c0Ec27": "agree",
+        "0xBDe7bCB9E579A6a63fC4C58e3f2BF458af7B1f30": "idle",
+        "0xee496Cab6D4428e20DAa0f3C4011C0772503cE95": "agree"
+      },
+      "expected": "VERIFIED:SATISFIES:FULL_MATCH",
+      "expectedFailure": false,
+      "readBack": {
+        "evaluated_at": 1794573522,
+        "evidence_digest": "d4240d7111cedc3400fe05b0ced03aef95c5e81235307079fc6b9d9ab3b68805",
+        "from_offer_id": "off_02",
+        "reason": "FULL_MATCH",
+        "to_offer_id": "off_01",
+        "verdict": "SATISFIES"
+      }
+    },
+    {
+      "step": "X3",
+      "scenario": "Bilateral Shortcut (K=2) Blocked",
+      "method": "clear_barter_cycle",
+      "caller": "Solver",
+      "hash": "0x1a9ff7bcfa091eff745d24df75973d960e9ede02561fdd3d4790240c53b9b6f6",
+      "status": "FINALIZED",
+      "executionResult": "ERROR",
+      "returnOrError": "INVALID_CYCLE_LENGTH:MIN_3",
+      "votes": {
+        "0x003192Feb616fA23158e1Ce232B4662458EebC28": "agree",
+        "0x42509F1b311C37DD50297fe16C283F392C7cD3E7": "idle",
+        "0x736d834361E9b2BeB24441905252FC7421818Fb1": "agree",
+        "0xad5793D7AA725ccdE8Da6fAF3400de8067559D8c": "agree",
+        "0xb6f925c91960bcB8a29C2c2108cC1ad42D519475": "agree"
+      },
+      "expected": "INVALID_CYCLE_LENGTH:MIN_3",
+      "expectedFailure": true
+    },
+    {
+      "step": "X4",
+      "scenario": "Deficient Edge in Clearing Cycle Blocked",
+      "method": "clear_barter_cycle",
+      "caller": "Solver",
+      "hash": "0xd5536304637068d0adbc9f9fb03f3534fc90ebd1ad505529ab54324e970976cf",
+      "status": "FINALIZED",
+      "executionResult": "ERROR",
+      "returnOrError": "EDGE_NOT_SATISFIED",
+      "votes": {
+        "0x28A9AEd6c177f234BDdD6f0507B2B2E07E6FfcE1": "idle",
+        "0x42509F1b311C37DD50297fe16C283F392C7cD3E7": "agree",
+        "0x736d834361E9b2BeB24441905252FC7421818Fb1": "idle",
+        "0xBDe7bCB9E579A6a63fC4C58e3f2BF458af7B1f30": "agree",
+        "0xee496Cab6D4428e20DAa0f3C4011C0772503cE95": "agree"
+      },
+      "expected": "EDGE_NOT_SATISFIED",
+      "expectedFailure": true
+    },
+    {
+      "step": "S9",
+      "scenario": "Permissionless Atomic 3-Ring Clearing",
+      "method": "clear_barter_cycle",
+      "caller": "Solver",
+      "hash": "0x2790e05c28ec7a77fe81dd53425d1ab49c0f177aa6737d90362d6a103eb60d9e",
+      "status": "FINALIZED",
+      "executionResult": "SUCCESS",
+      "returnOrError": "CLEARED_RING:ring_01:LEN_3",
+      "votes": {
+        "0x22681B4D0B784973415385F6e37876eB62383783": "agree",
+        "0x93bC68565cA1E41EA27D30192cB900B497dC7A04": "agree",
+        "0xad5793D7AA725ccdE8Da6fAF3400de8067559D8c": "idle",
+        "0xb6f925c91960bcB8a29C2c2108cC1ad42D519475": "idle",
+        "0xc6425717F235a81a2D456c65231afB3d62A5fcdD": "agree"
+      },
+      "expected": "CLEARED_RING:ring_01:LEN_3",
+      "expectedFailure": false,
+      "readBack": {
+        "ring": {
+          "cleared_at": 1794573641,
+          "cycle_length": 3,
+          "cycle_nodes": [
+            "off_01",
+            "off_03",
+            "off_02"
+          ],
+          "ring_id": "ring_01",
+          "solver": "0xeb55b0551b2456375d451b3a00ca36db3313a155",
+          "solver_bounty": 15
+        },
+        "accounting": {
+          "total_active_deposits": 0,
+          "total_pending_withdrawals": 300
+        },
+        "entitlements": {
+          "alice_received": "off_02",
+          "bob_received": "off_03",
+          "carol_received": "off_01"
+        }
+      }
+    },
+    {
+      "step": "X5",
+      "scenario": "Premature Expiry Before Deadline Blocked",
+      "method": "expire_offer",
+      "caller": "Alice",
+      "hash": "0xb92e25a7c313a5baacf96f5789fa9d852e92e90f5b97b17c4d2d00f802a14c50",
+      "status": "FINALIZED",
+      "executionResult": "ERROR",
+      "returnOrError": "MARKET_STILL_ACTIVE",
+      "votes": {
+        "0x003192Feb616fA23158e1Ce232B4662458EebC28": "agree",
+        "0x22681B4D0B784973415385F6e37876eB62383783": "idle",
+        "0xc11341b779Da78CAF29d8dAe09DF1B9B1075d462": "agree",
+        "0xc3107801f55D209f667101272bc2905Ad83ba792": "idle",
+        "0xee496Cab6D4428e20DAa0f3C4011C0772503cE95": "agree"
+      },
+      "expected": "MARKET_STILL_ACTIVE",
+      "expectedFailure": true
+    },
+    {
+      "step": "X6",
+      "scenario": "Replay of Cleared Offer Blocked",
+      "method": "clear_barter_cycle",
+      "caller": "Solver",
+      "hash": "0x4c2524402850d22e9e79328c91ee069bf14154809686975a0210e110f72cd227",
+      "status": "FINALIZED",
+      "executionResult": "ERROR",
+      "returnOrError": "OFFER_ALREADY_CLEARED",
+      "votes": {
+        "0x003192Feb616fA23158e1Ce232B4662458EebC28": "agree",
+        "0x435b49A3c8356E1B5eB4369d829510A7a004eCfC": "idle",
+        "0x5004AED07d19D8750DA8488EDa327A3A81c0Ec27": "agree",
+        "0xad5793D7AA725ccdE8Da6fAF3400de8067559D8c": "agree",
+        "0xc6425717F235a81a2D456c65231afB3d62A5fcdD": "idle"
+      },
+      "expected": "OFFER_ALREADY_CLEARED",
+      "expectedFailure": true
+    },
+    {
+      "step": "S10",
+      "scenario": "Solver Withdraws Bounty Credits (Pull-Payment)",
+      "method": "withdraw_credits",
+      "caller": "Solver",
+      "hash": "0x2aba0d83832afbe30900ea82acf201275bc594afa39a0a1e48da55a95557d028",
+      "status": "FINALIZED",
+      "executionResult": "SUCCESS",
+      "returnOrError": "15",
+      "votes": {
+        "0x28A9AEd6c177f234BDdD6f0507B2B2E07E6FfcE1": "agree",
+        "0x736d834361E9b2BeB24441905252FC7421818Fb1": "agree",
+        "0xad5793D7AA725ccdE8Da6fAF3400de8067559D8c": "idle",
+        "0xc11341b779Da78CAF29d8dAe09DF1B9B1075d462": "idle",
+        "0xc6425717F235a81a2D456c65231afB3d62A5fcdD": "agree"
+      },
+      "expected": 15,
+      "expectedFailure": false,
+      "readBack": {
+        "solver_balance_after": 0,
+        "accounting": {
+          "total_active_deposits": 0,
+          "total_pending_withdrawals": 285
+        }
+      }
+    }
+  ]
+}
