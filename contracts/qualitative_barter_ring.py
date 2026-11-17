@@ -46,10 +46,55 @@ VALID_REASONS = {
 }
 VALID_STATUSES = {"ACTIVE", "CLEARED", "EXPIRED"}
 
+MAX_EDGE_ATTEMPTS = 5
+CONCLUDED_VERDICTS = {"SATISFIES", "DEFICIENT"}
+VERDICT_COMPATIBLE_REASONS = {
+    "SATISFIES": {"FULL_MATCH"},
+    "DEFICIENT": {"SPEC_DEFICIENT", "LICENSE_INCOMPATIBLE", "SCHEMA_MISMATCH"},
+    "UNVERIFIABLE": {"FETCH_OR_PARSE_FAILURE", "HASH_MISMATCH"},
+}
+
 
 # -----------------------------------------------------------------------------
 # Deterministic Pure Helpers
 # -----------------------------------------------------------------------------
+def is_compatible_verdict_reason(verdict: str, reason: str) -> bool:
+    """
+    Returns True iff verdict is in VERDICT_COMPATIBLE_REASONS
+    and reason is in VERDICT_COMPATIBLE_REASONS[verdict].
+    """
+    return verdict in VERDICT_COMPATIBLE_REASONS and reason in VERDICT_COMPATIBLE_REASONS[verdict]
+
+
+def enforce_verdict_reason_compatibility(verdict: str, reason: str) -> tuple[str, str]:
+    """
+    Deterministically normalizes and coerces (verdict, reason) into a strictly compatible pair:
+    - If verdict not in VALID_VERDICTS: coerced to UNVERIFIABLE
+    - SATISFIES requires FULL_MATCH; if reason in DEFICIENT reasons -> DEFICIENT; otherwise -> (UNVERIFIABLE, FETCH_OR_PARSE_FAILURE)
+    - DEFICIENT requires a valid DEFICIENT reason; otherwise defaults to SPEC_DEFICIENT
+    - UNVERIFIABLE requires a valid UNVERIFIABLE reason; otherwise defaults to FETCH_OR_PARSE_FAILURE
+    """
+    v = str(verdict).strip().upper()
+    r = str(reason).strip().upper()
+    if v not in VALID_VERDICTS:
+        v = "UNVERIFIABLE"
+
+    if v == "SATISFIES":
+        if r == "FULL_MATCH":
+            return ("SATISFIES", "FULL_MATCH")
+        if r in VERDICT_COMPATIBLE_REASONS["DEFICIENT"]:
+            return ("DEFICIENT", r)
+        return ("UNVERIFIABLE", "FETCH_OR_PARSE_FAILURE")
+
+    if v == "DEFICIENT":
+        if r in VERDICT_COMPATIBLE_REASONS["DEFICIENT"]:
+            return ("DEFICIENT", r)
+        return ("DEFICIENT", "SPEC_DEFICIENT")
+
+    # v == "UNVERIFIABLE"
+    if r in VERDICT_COMPATIBLE_REASONS["UNVERIFIABLE"]:
+        return ("UNVERIFIABLE", r)
+    return ("UNVERIFIABLE", "FETCH_OR_PARSE_FAILURE")
 def is_valid_evidence_url(url: str) -> bool:
     """
     Validates evidence URL according to strict immutable repository allowlist:
@@ -121,12 +166,16 @@ def validate_leader_canonical_response(leader_calldata: Any, val_data: dict) -> 
     - reason
     - to_offer_id
     - verdict
-    Rejects extra keys, missing keys, forged digests, or altered reason/verdict.
+    Rejects extra keys, missing keys, forged digests, altered reason/verdict, or incompatible verdict/reason pairs.
     """
     if not isinstance(leader_calldata, dict):
         return False
     expected_keys = {"evidence_digest", "from_offer_id", "reason", "to_offer_id", "verdict"}
     if set(leader_calldata.keys()) != expected_keys:
+        return False
+    if not is_compatible_verdict_reason(
+        str(leader_calldata.get("verdict", "")), str(leader_calldata.get("reason", ""))
+    ):
         return False
     for k in expected_keys:
         if leader_calldata.get(k) != val_data.get(k):
@@ -363,8 +412,15 @@ class QualitativeBarterRing(gl.Contract):
             raise gl.vm.UserError("OFFER_NOT_ACTIVE")
 
         edge_key = f"{from_offer_id}->{to_offer_id}"
-        if self.edges.get(edge_key, ""):
-            raise gl.vm.UserError("EDGE_ALREADY_EVALUATED")
+        existing_edge_raw = self.edges.get(edge_key, "")
+        prev_attempts = 0
+        if existing_edge_raw:
+            existing_edge = json.loads(existing_edge_raw)
+            if existing_edge.get("verdict") in CONCLUDED_VERDICTS:
+                raise gl.vm.UserError("EDGE_ALREADY_EVALUATED")
+            prev_attempts = int(existing_edge.get("attempts", 1))
+            if prev_attempts >= MAX_EDGE_ATTEMPTS:
+                raise gl.vm.UserError("MAX_EDGE_RETRIES_EXCEEDED")
 
         # Snapshot storage into local primitives before nondeterministic closures
         c_from_id = str(from_offer_id)
@@ -495,14 +551,7 @@ Return ONLY a valid JSON object:
             verdict = str(parsed.get("verdict", "UNVERIFIABLE")).strip().upper()
             reason = str(parsed.get("reason", "FETCH_OR_PARSE_FAILURE")).strip().upper()
 
-            if verdict not in VALID_VERDICTS:
-                verdict = "UNVERIFIABLE"
-            if reason not in VALID_REASONS:
-                reason = "FETCH_OR_PARSE_FAILURE"
-
-            # Enforce semantic consistency: SATISFIES requires FULL_MATCH
-            if verdict == "SATISFIES" and reason != "FULL_MATCH":
-                verdict = "DEFICIENT"
+            verdict, reason = enforce_verdict_reason_compatibility(verdict, reason)
 
             return {
                 "evidence_digest": evidence_digest,
@@ -520,13 +569,19 @@ Return ONLY a valid JSON object:
 
         eval_res = gl.vm.run_nondet_unsafe(leader_fn, validator_fn)
 
+        final_verdict = str(eval_res.get("verdict", "UNVERIFIABLE"))
+        final_reason = str(eval_res.get("reason", "FETCH_OR_PARSE_FAILURE"))
+        if not is_compatible_verdict_reason(final_verdict, final_reason):
+            raise gl.vm.UserError("INCOMPATIBLE_VERDICT_REASON")
+
         edge_data = {
+            "attempts": prev_attempts + 1,
             "evaluated_at": now,
             "evidence_digest": eval_res.get("evidence_digest", ""),
             "from_offer_id": c_from_id,
-            "reason": eval_res.get("reason", "FETCH_OR_PARSE_FAILURE"),
+            "reason": final_reason,
             "to_offer_id": c_to_id,
-            "verdict": eval_res.get("verdict", "UNVERIFIABLE"),
+            "verdict": final_verdict,
         }
         self.edges[edge_key] = json.dumps(edge_data, sort_keys=True)
 

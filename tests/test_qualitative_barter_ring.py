@@ -10,6 +10,11 @@ from contracts.qualitative_barter_ring import (
     is_valid_evidence_url,
     parse_json_safely,
     MAX_EVIDENCE_BYTES,
+    MAX_EDGE_ATTEMPTS,
+    CONCLUDED_VERDICTS,
+    VERDICT_COMPATIBLE_REASONS,
+    is_compatible_verdict_reason,
+    enforce_verdict_reason_compatibility,
 )
 from conftest import (
     gl_mock,
@@ -722,3 +727,167 @@ def test_4_node_elementary_cycle():
     ring = json.loads(contract.get_ring("ring_01"))
     assert ring["cycle_length"] == 4
     assert ring["solver_bounty"] == 20  # 4 * 5
+
+
+# =============================================================================
+# 8. Unverifiable Edge Retry & Conclusive Immutability Test
+# =============================================================================
+def test_unverifiable_edge_retry_and_conclusive_immutability():
+    contract = QualitativeBarterRing()
+    set_sender(ADDR_ADMIN)
+    set_time(1731400000)
+    contract.open_market(1800, 100, 5)
+
+    b_off_01 = _read_fixture_bytes("off_01_med_nlp.json")
+    b_off_02 = _read_fixture_bytes("off_02_coq_proof.json")
+    b_off_03 = _read_fixture_bytes("off_03_compute_sla.json")
+    h_off_01 = _sha256_hex(b_off_01)
+    h_off_02 = _sha256_hex(b_off_02)
+    h_off_03 = _sha256_hex(b_off_03)
+
+    # Register off_01 (Alice), off_02 (Bob), off_03 (Carol)
+    set_sender(ADDR_ALICE)
+    contract.register_offer("off_01", SUMMARY_OFF_01, DEMAND_OFF_01, URL_OFF_01, h_off_01)
+    set_sender(ADDR_BOB)
+    contract.register_offer("off_02", SUMMARY_OFF_02, DEMAND_OFF_02, URL_OFF_02, h_off_02)
+    set_sender(ADDR_CAROL)
+    contract.register_offer("off_03", SUMMARY_OFF_03, DEMAND_OFF_03, URL_OFF_03, h_off_03)
+
+    # 1. Simulate transient 503 error on URL_OFF_01
+    mock_web_responses[URL_OFF_01] = MockWebResponse(status=503, body=b"Service Temporarily Unavailable")
+    mock_web_responses[URL_OFF_03] = MockWebResponse(status=200, body=b_off_03)
+
+    res1 = contract.evaluate_edge("off_01", "off_03")
+    assert res1 == "VERIFIED:UNVERIFIABLE:FETCH_OR_PARSE_FAILURE"
+
+    edge_1 = json.loads(contract.get_edge("off_01", "off_03"))
+    assert edge_1["attempts"] == 1
+    assert edge_1["verdict"] == "UNVERIFIABLE"
+    assert edge_1["reason"] == "FETCH_OR_PARSE_FAILURE"
+
+    # 2. Network recovers (HTTP 200 with valid evidence bytes)
+    mock_web_responses[URL_OFF_01] = MockWebResponse(status=200, body=b_off_01)
+
+    def llm_eval(prompt: str) -> dict:
+        return {"verdict": "SATISFIES", "reason": "FULL_MATCH"}
+
+    mock_llm_responses.append(llm_eval)
+
+    # Retry should succeed and transition edge to SATISFIES
+    res2 = contract.evaluate_edge("off_01", "off_03")
+    assert res2 == "VERIFIED:SATISFIES:FULL_MATCH"
+
+    edge_2 = json.loads(contract.get_edge("off_01", "off_03"))
+    assert edge_2["attempts"] == 2
+    assert edge_2["verdict"] == "SATISFIES"
+    assert edge_2["reason"] == "FULL_MATCH"
+
+    # 3. Third call must fail: SATISFIES is conclusive and immutable
+    with pytest.raises(UserError, match="EDGE_ALREADY_EVALUATED"):
+        contract.evaluate_edge("off_01", "off_03")
+
+    # 4. Conclusive DEFICIENT immutability:
+    # Evaluate off_01 -> off_02 with DEFICIENT mock response
+    def llm_def(prompt: str) -> dict:
+        return {"verdict": "DEFICIENT", "reason": "SPEC_DEFICIENT"}
+
+    mock_llm_responses.clear()
+    mock_llm_responses.append(llm_def)
+
+    res_def = contract.evaluate_edge("off_01", "off_02")
+    assert res_def == "VERIFIED:DEFICIENT:SPEC_DEFICIENT"
+    edge_def = json.loads(contract.get_edge("off_01", "off_02"))
+    assert edge_def["verdict"] == "DEFICIENT"
+
+    # Retrying a DEFICIENT edge must also be blocked
+    with pytest.raises(UserError, match="EDGE_ALREADY_EVALUATED"):
+        contract.evaluate_edge("off_01", "off_02")
+
+    # 5. Retry limit test (MAX_EDGE_ATTEMPTS = 5):
+    # Dave registers an offer whose URL perpetually fails
+    URL_FAIL = "https://raw.githubusercontent.com/Kanezar3/QualitativeBarterRing/7a9b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b/evidence/off_fail.json"
+    mock_web_responses[URL_FAIL] = MockWebResponse(status=500, body=b"Server Error")
+    set_sender(ADDR_DAVE)
+    contract.register_offer("off_fail", "Fail offer", "Demand", URL_FAIL, "00" * 32)
+
+    # Attempts 1 to 5: all return UNVERIFIABLE
+    for attempt in range(1, MAX_EDGE_ATTEMPTS + 1):
+        res = contract.evaluate_edge("off_fail", "off_03")
+        assert res == "VERIFIED:UNVERIFIABLE:FETCH_OR_PARSE_FAILURE"
+        e = json.loads(contract.get_edge("off_fail", "off_03"))
+        assert e["attempts"] == attempt
+
+    # Attempt 6 (exceeding MAX_EDGE_ATTEMPTS): raises MAX_EDGE_RETRIES_EXCEEDED
+    with pytest.raises(UserError, match="MAX_EDGE_RETRIES_EXCEEDED"):
+        contract.evaluate_edge("off_fail", "off_03")
+
+
+# =============================================================================
+# 9. Verdict-Reason Compatibility Table & Validation Test
+# =============================================================================
+def test_verdict_reason_compatibility_table():
+    # 1. Test is_compatible_verdict_reason
+    assert is_compatible_verdict_reason("SATISFIES", "FULL_MATCH") is True
+    assert is_compatible_verdict_reason("DEFICIENT", "SPEC_DEFICIENT") is True
+    assert is_compatible_verdict_reason("DEFICIENT", "LICENSE_INCOMPATIBLE") is True
+    assert is_compatible_verdict_reason("DEFICIENT", "SCHEMA_MISMATCH") is True
+    assert is_compatible_verdict_reason("UNVERIFIABLE", "FETCH_OR_PARSE_FAILURE") is True
+    assert is_compatible_verdict_reason("UNVERIFIABLE", "HASH_MISMATCH") is True
+
+    # Incompatible pairs
+    assert is_compatible_verdict_reason("SATISFIES", "SPEC_DEFICIENT") is False
+    assert is_compatible_verdict_reason("SATISFIES", "FETCH_OR_PARSE_FAILURE") is False
+    assert is_compatible_verdict_reason("SATISFIES", "HASH_MISMATCH") is False
+    assert is_compatible_verdict_reason("DEFICIENT", "FULL_MATCH") is False
+    assert is_compatible_verdict_reason("DEFICIENT", "FETCH_OR_PARSE_FAILURE") is False
+    assert is_compatible_verdict_reason("DEFICIENT", "HASH_MISMATCH") is False
+    assert is_compatible_verdict_reason("UNVERIFIABLE", "FULL_MATCH") is False
+    assert is_compatible_verdict_reason("UNVERIFIABLE", "SPEC_DEFICIENT") is False
+    assert is_compatible_verdict_reason("UNVERIFIABLE", "LICENSE_INCOMPATIBLE") is False
+    assert is_compatible_verdict_reason("UNKNOWN", "FULL_MATCH") is False
+    assert is_compatible_verdict_reason("SATISFIES", "UNKNOWN") is False
+
+    # 2. Test enforce_verdict_reason_compatibility
+    assert enforce_verdict_reason_compatibility("SATISFIES", "FULL_MATCH") == ("SATISFIES", "FULL_MATCH")
+    assert enforce_verdict_reason_compatibility("satisfies", "full_match") == ("SATISFIES", "FULL_MATCH")
+    # SATISFIES with DEFICIENT reason coerces to DEFICIENT
+    assert enforce_verdict_reason_compatibility("SATISFIES", "SPEC_DEFICIENT") == ("DEFICIENT", "SPEC_DEFICIENT")
+    assert enforce_verdict_reason_compatibility("SATISFIES", "LICENSE_INCOMPATIBLE") == ("DEFICIENT", "LICENSE_INCOMPATIBLE")
+    # SATISFIES with non-DEFICIENT incompatible reason coerces to UNVERIFIABLE
+    assert enforce_verdict_reason_compatibility("SATISFIES", "FETCH_OR_PARSE_FAILURE") == ("UNVERIFIABLE", "FETCH_OR_PARSE_FAILURE")
+    assert enforce_verdict_reason_compatibility("SATISFIES", "GARBAGE") == ("UNVERIFIABLE", "FETCH_OR_PARSE_FAILURE")
+
+    # DEFICIENT with valid DEFICIENT reason
+    assert enforce_verdict_reason_compatibility("DEFICIENT", "SCHEMA_MISMATCH") == ("DEFICIENT", "SCHEMA_MISMATCH")
+    # DEFICIENT with invalid reason defaults to SPEC_DEFICIENT
+    assert enforce_verdict_reason_compatibility("DEFICIENT", "FULL_MATCH") == ("DEFICIENT", "SPEC_DEFICIENT")
+    assert enforce_verdict_reason_compatibility("DEFICIENT", "FETCH_OR_PARSE_FAILURE") == ("DEFICIENT", "SPEC_DEFICIENT")
+
+    # UNVERIFIABLE with valid UNVERIFIABLE reason
+    assert enforce_verdict_reason_compatibility("UNVERIFIABLE", "HASH_MISMATCH") == ("UNVERIFIABLE", "HASH_MISMATCH")
+    # UNVERIFIABLE with invalid reason defaults to FETCH_OR_PARSE_FAILURE
+    assert enforce_verdict_reason_compatibility("UNVERIFIABLE", "FULL_MATCH") == ("UNVERIFIABLE", "FETCH_OR_PARSE_FAILURE")
+    assert enforce_verdict_reason_compatibility("UNVERIFIABLE", "SPEC_DEFICIENT") == ("UNVERIFIABLE", "FETCH_OR_PARSE_FAILURE")
+
+    # Unknown verdict coerces to UNVERIFIABLE
+    assert enforce_verdict_reason_compatibility("INVALID_VERDICT", "FULL_MATCH") == ("UNVERIFIABLE", "FETCH_OR_PARSE_FAILURE")
+
+    # 3. Test validate_leader_canonical_response rejects incompatible pairs
+    valid_calldata = {
+        "evidence_digest": "aa" * 32,
+        "from_offer_id": "off_01",
+        "reason": "FULL_MATCH",
+        "to_offer_id": "off_02",
+        "verdict": "SATISFIES",
+    }
+    assert validate_leader_canonical_response(valid_calldata, valid_calldata) is True
+
+    # Incompatible leader verdict/reason rejected even if validator produced matching dict
+    incompatible_calldata = dict(valid_calldata, verdict="SATISFIES", reason="SPEC_DEFICIENT")
+    assert validate_leader_canonical_response(incompatible_calldata, incompatible_calldata) is False
+
+    incompatible_calldata2 = dict(valid_calldata, verdict="DEFICIENT", reason="FULL_MATCH")
+    assert validate_leader_canonical_response(incompatible_calldata2, incompatible_calldata2) is False
+
+    incompatible_calldata3 = dict(valid_calldata, verdict="UNVERIFIABLE", reason="FULL_MATCH")
+    assert validate_leader_canonical_response(incompatible_calldata3, incompatible_calldata3) is False

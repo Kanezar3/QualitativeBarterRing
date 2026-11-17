@@ -774,6 +774,30 @@ async function main() {
     });
   }
 
+  // Guard X7: Conclusive edge re-evaluation blocked (Immutability)
+  if (!history.find(h => h.step === 'X7')) {
+    console.log('\n--- Executing Guard X7: Conclusive edge re-evaluation blocked ---');
+    const { txHash, receipt } = await safeWrite(clientAdmin, {
+      address: MAIN_ADDR,
+      functionName: 'evaluate_edge',
+      args: ['off_01', 'off_03'],
+      expectSuccess: false
+    });
+    recordStep({
+      step: 'X7',
+      scenario: 'Re-evaluate Concluded SATISFIES Edge Blocked',
+      method: 'evaluate_edge',
+      caller: 'Admin',
+      hash: txHash,
+      status: receipt?.status || 'FINALIZED',
+      executionResult: receipt?.executionResult || 'ERROR',
+      returnOrError: receipt?.returnReadable || receipt?.stderr || '',
+      votes: receipt?.votes || {},
+      expected: 'EDGE_ALREADY_EVALUATED',
+      expectedFailure: true
+    });
+  }
+
   // Step S9: Permissionless clearing of 3-ring ["off_01", "off_03", "off_02"]
   if (!history.find(h => h.step === 'S9')) {
     console.log('\n--- Executing Step S9: Permissionless clearing of 3-ring ---');
@@ -919,7 +943,7 @@ async function main() {
   }
 
   console.log('\n===============================================================');
-  console.log('  Live StudioNet Demo Complete! All S1-S10 & X1-X6 recorded.  ');
+  console.log('  Live StudioNet Demo Complete! All S1-S10 & X1-X7 recorded.  ');
   console.log(`  Manifest written to: ${MANIFEST_FILE}                       `);
   console.log('===============================================================');
 }
